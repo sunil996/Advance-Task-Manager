@@ -1,7 +1,6 @@
-const { ApiError } =require("../utils/ApiError.js");
-const { asyncHandler } =require("../utils/asyncHandler");
+const asyncHandler =require("../utils/asyncWrapper.js");
 const  jwt =require("jsonwebtoken");
-const {User}=require("../models/user.model.js")
+const User=require("../models/user.model.js")
 
 const verifyJWT = asyncHandler(async (req,res, next) => {
  

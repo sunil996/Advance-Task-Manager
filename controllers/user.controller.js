@@ -1,4 +1,4 @@
-const verifyJWT=require("../middleware/auth.middleware.js") 
+const verifyJWT=require("../middlewares/auth.middleware.js") 
 const User = require('../models/user.model.js');
 const asyncHandler=require("../utils/asyncWrapper.js")
 const twilio = require('twilio');
@@ -100,7 +100,7 @@ const  resendOtp = asyncHandler(async (req, res) => {
     res.status(200).json({ success:true,message: 'User verified successfully',data: userToken});
 })
 
-//Login user 
+
 const loginUser=asyncHandler(async(req,res)=>{
     
     const {phoneNumber,password} = req.body;
@@ -133,13 +133,13 @@ const loginUser=asyncHandler(async(req,res)=>{
   return res.status(201).json({success:true,message:"successfull login",data:accessToken})
 })
 
-//Logout User
+
 const logoutUser = asyncHandler(async(req, res) => {
 
     return res.status(200).json({success:true,message:"user log out successfully.",data:null})
  });
 
-//update user data.
+
 const updateUser=asyncHandler(async(req,res)=>{
 
     const { newPhoneNumber, currentPassword, newPassword, newFullName } = req.body;
@@ -171,8 +171,6 @@ const updateUser=asyncHandler(async(req,res)=>{
     res.status(200).json({ success: true, message: 'Profile updated successfully', data: responseData });
 })
 
-
-//update password 
  
 const updatePassword = asyncHandler(async (req, res) => {
 
@@ -201,4 +199,4 @@ const updatePassword = asyncHandler(async (req, res) => {
    return res.status(200).json({ success: true, message: 'Password updated successfully', data: null });
 });
 
-module.exports={registerUser,resendOtp,verifyUser,loginUser,logoutUser,updateUserPassword,updateUser}
+module.exports={registerUser,resendOtp,verifyUser,loginUser,logoutUser,updatePassword,updateUser}

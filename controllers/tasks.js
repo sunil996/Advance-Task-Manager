@@ -1,70 +1,113 @@
-
 const Task=require("../models/task.model");
-const {asyncWrapper} =require("../utils/asyncWrapper.js")
+const Collection=require("../models/collection.model");
+const asyncHandler =require("../utils/asyncWrapper.js")
 
-const getAllTasks=async(req,res)=>{
+const getAllTasks=asyncHandler(async(req,res)=>{
 
-  try {
-     
-    const tasks = await Task.find();
-    res.status(200).json({ tasks:tasks });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ msg:err});
+  const{collectionId}=req.params.collection;
+
+  if(!mongoose.isObject(collectionId)){
+    return res.status(400).json({success:false,message:"Invalid collection id",data:null});
   }
-}
 
-const createTask = async (req, res) => {
-    try {
-      const task = await Task.create(req.body);
-      res.status(201).json({ task }); 
-    } catch (err) {
-      res.status(500).json({ msg:err });
-    }
-  };
+  const alltasks=Task.find({collection:collectionId})
   
-
-const getTask=asyncWrapper(async(req,res)=>{ 
-   
-  const id=req.params.id;
-  const task = await Task.find({_id:id});
-
-  if(!task){
-     res.status(404).json({msg:`No task with id:${id}`});
+  if(!alltasks){
+    return res.status(500).json({success:false,message:"Failed to get tasks.",data:null});
   }
-  res.status(200).json({ task:task });
+  if (alltasks.length === 0) {
+    return res.status(404).json({ success: false, message: "No tasks found for the provided collection ID", data: [] });
+ }
 
+  return res.status(200).json({success:true,message:"Tasks fetched successfully",data:alltasks});
 });
 
-const updateTask=async(req,res)=>{
-  try {
+const createTask=asyncHandler(async (req, res) => {
     
-    const id=req.params.id;
-    const task = await Task.findByIdAndUpdate({_id:id},req.body,{new:true,runValidators:true});
-   
-    if(!task){
-      return res.status(404).json({msg:`No task with id:${id}`});
-    }
-    res.status(200).json({ task:task });
-   } catch (error) {
-    res.status(500).json({msg:error})
-   }
-}
- 
-const deleteTask=async(req,res)=>{
-     try {
-      const id=req.params.id;
-      const task = await Task.findOneAndDelete({_id:id});
+  let {title, priority,dueDate,collection}=req.body;
   
-      if(!task){
-        return res.status(404).json({msg:`No task with this id:${id}`});
-      }
-      res.status(200).json({ task:task });
-     } catch (error) {
-      res.status(500).json({msg:error})
-     }
-}
+  if(!title?.trim()){
+    return res.status(400).json({success:false,message:"Title is required",data:null});
+  }
+
+  if(!dueDate?.trim()){
+    return res.status(400).json({success:false,message:"due date is required",data:null});
+  }
+
+  if(!collection?.trim()){
+    return res.status(400).json({success:false,message:"Collection is required",data:null});
+  }
+ 
+    const task = await Task.create({
+    title: title.trim(),
+    priority: priority || 'Medium',  
+    dueDate: dueDate,
+    collection: collection
+  });
+
+  if(!task){
+    return res.status(500).json({success:false,message:"Failed to create task.",data:null});
+  }
+
+  return res.status(201).json({success:true,message:"Task is created successfully.",data:task})
+
+  });
+ 
+
+const updateTask=asyncHandler(async(req,res)=>{
+
+  let { taskId } = req.params; 
+  let {title, collection,dueDate}=req.body;
+  let updateableFields={};
+
+  if(!mongoose.isObject(taskId)){
+    return res.status(400).json({success:false,message:"Invalid task id",data:null});
+  }
+
+  if(title?.trim()){
+    updateableFields.title=title.trim();
+  }
+
+  if(collection?.trim()){
+    updateableFields.collection=collection.trim();
+  }
+
+   if(dueDate?.trim()){
+    updateableFields.dueDate=dueDate.trim();
+   }
+   
+   if(Object.keys(updateableFields).length==0){                                                                                                                       
+    return res.status(400).json({ success: false, message: "No valid updateable fields provided", data: null });                                               
+   }
+
+    const updatedTask = await Task.findByIdAndUpdate(taskId, updateableFields, { new: true });
+
+    if (!updatedTask) {
+        return res.status(404).json({ success: false, message: "Task not found", data: null });
+    }
+
+    return res.status(200).json({ success: true, message: "Task updated successfully", data: updatedTask });
+   
+})
+ 
+const deleteTask=asyncHandler(async(req,res)=>{
+ 
+  let { taskId } = req.params;
+  
+  if(!mongoose.isObject(taskId)){
+    return res.status(400).json({success:false,message:"Invalid task id",data:null});
+  } 
+
+  const deletedTask = await Task.findByIdAndDelete(taskId?.trim());
+  
+  if (!deletedTask) {
+      return res.status(404).json({ success: false, message: "Task not found", data: null });
+  }
+  
+  return res.status(200).json({ success: true, message: "Task deleted successfully", data: deletedTask });
+  
+})
 
 module.exports={
-    getAllTasks,createTask,getTask,updateTask,deleteTask
+    getAllTasks,createTask,updateTask,deleteTask
 }
